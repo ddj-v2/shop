@@ -106,6 +106,7 @@ interface ShopBridge {
       purchaseModelId?: string,
       data?: Record<string, unknown>,
       description?: string,
+      redirectUrl?: string,
     ) => Promise<number | string>;
   };
   registerGoodsPurchaseModel: (
@@ -142,6 +143,20 @@ if (shopBridge) {
     href: '/example/manage',
   });
 }
+```
+
+### 使用 `ctx.inject` 的注意事項
+
+- 此專案整合建議使用：`ctx.inject(['Shop'], ...)`（大寫）
+- 請保持與外掛實際註冊/載入方式一致，避免 inject key 不匹配
+
+```ts
+// 建議用法
+ctx.inject(['Shop'], (c) => {
+  const shopBridge = (global.Hydro as any)?.shopBridge;
+  if (!shopBridge) return;
+  // ...
+});
 ```
 
 ## registerShopManageEntry 的 href 建議寫法
@@ -243,6 +258,7 @@ if (shopBridge) {
 - `objectId?: string` 物件 ID（可重複）
 - `name: string` 商品名稱
 - `description?: string` 商品描述（Markdown）
+- `redirectUrl?: string` 購買成功後跳轉連結（支援 `/path` 或 `http(s)://`）
 - `price: number` 商品價格
 - `num: number` 庫存（`-1` 或任何 `< 0` 代表無限）
 - `purchaseModelId?: string` 購買處理器 ID
@@ -255,6 +271,7 @@ if (shopBridge) {
 - `name` 使用 `badge.title`
 - `description` 使用 `badge.content`
 - `purchaseModelId` 使用 `badge_purchase`
+- `redirectUrl` 可設為 `/badge/mybadge`（購買成功後直接跳到我的徽章）
 
 如此可讓商城直接以 Markdown 顯示徽章說明內容。
 

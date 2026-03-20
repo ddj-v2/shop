@@ -1,5 +1,7 @@
 import {
-    Context, UserModel, DomainModel, SettingModel, RecordModel, TokenModel, SystemModel, Handler, UserNotFoundError, UserAlreadyExistError, NotFoundError, ValidationError, param, PRIV, Types, query, STATUS, Logger
+    Context, UserModel, DomainModel, SettingModel, RecordModel, TokenModel, SystemModel, Handler, UserNotFoundError, UserAlreadyExistError, NotFoundError, ValidationError, param, PRIV, Types, query, STATUS, Logger,
+    Service,
+    Schema
 } from 'hydrooj';
 import { CoinModel, GoodsModel } from './model';
 import type { Goods, GoodsPurchaseModel } from './model';
@@ -584,111 +586,113 @@ class CoinSettingHandler extends Handler {
     }
 }
 
-// 配置项及路由
-export async function apply(ctx: Context) {
-    ctx.inject(['setting'], (c) => {
-        c.setting.AccountSetting(
-            SettingModel.Setting('setting_storage', 'coin_now', 0, 'number', 'coin_now', null, 3),
-            SettingModel.Setting('setting_storage', 'coin_all', 0, 'number', 'coin_all', null, 3)
-        );
-        c.setting.SystemSetting(
-            SettingModel.Setting('domain_coin_setting', 'coin.uname_change_cost', 20, 'number', 'coin.uname_change_cost', '修改使用者名稱所需硬幣數量', 0)
-        );
-        c.setting.DomainSetting(
-            SettingModel.Setting('setting_storage', 'coin_enabled', false, 'boolean', '自動發放硬幣', '為此網域啟用首次 AC 硬幣發放功能',3),  
-            SettingModel.Setting('setting_storage', 'coin_amount', 2, 'number', '每題硬幣數量', '每題首次 AC 可獲得的硬幣數量',3)  
-        );
-    });
+export default class ShopService extends Service {
+    static Config = Schema.object({});
+    constructor(ctx: Context, config: ReturnType<typeof ShopService.Config>) {
+        super(ctx, 'Shop');
+        ctx.inject(['setting'], (c) => {
+            c.setting.AccountSetting(
+                SettingModel.Setting('setting_storage', 'coin_now', 0, 'number', 'coin_now', null, 3),
+                SettingModel.Setting('setting_storage', 'coin_all', 0, 'number', 'coin_all', null, 3)
+            );
+            c.setting.SystemSetting(
+                SettingModel.Setting('domain_coin_setting', 'coin.uname_change_cost', 20, 'number', 'coin.uname_change_cost', '修改使用者名稱所需硬幣數量', 0)
+            );
+            c.setting.DomainSetting(
+                SettingModel.Setting('setting_storage', 'coin_enabled', false, 'boolean', '自動發放硬幣', '為此網域啟用首次 AC 硬幣發放功能',3),  
+                SettingModel.Setting('setting_storage', 'coin_amount', 2, 'number', '每題硬幣數量', '每題首次 AC 可獲得的硬幣數量',3)  
+            );
+        });
 
-    ctx.on('record/judge', async (rdoc, updated, pdoc) => {
-        try {
-            if (rdoc.status !== STATUS.STATUS_ACCEPTED) return;
-            if (rdoc.contest) return;
-            if (rdoc.rejudged) return;
-            if (!updated) return;
+        ctx.on('record/judge', async (rdoc, updated, pdoc) => {
+            try {
+                if (rdoc.status !== STATUS.STATUS_ACCEPTED) return;
+                if (rdoc.contest) return;
+                if (rdoc.rejudged) return;
+                if (!updated) return;
 
-            const ddoc = await DomainModel.get(rdoc.domainId);
-            const coinEnabled = ddoc?.coin_enabled || false;
-            if (!coinEnabled) return;
+                const ddoc = await DomainModel.get(rdoc.domainId);
+                const coinEnabled = ddoc?.coin_enabled || false;
+                if (!coinEnabled) return;
 
-            const result = await RecordModel.collStat.updateOne(
-                {
-                    domainId: rdoc.domainId,
-                    pid: rdoc.pid,
-                    uid: rdoc.uid
-                },
-                {
-                    $setOnInsert: {
-                        _id: rdoc._id,
+                const result = await RecordModel.collStat.updateOne(
+                    {
                         domainId: rdoc.domainId,
                         pid: rdoc.pid,
-                        uid: rdoc.uid,
-                        time: rdoc.time,
-                        memory: rdoc.memory,
-                        length: rdoc.code?.length || 0,
-                        lang: rdoc.lang,
+                        uid: rdoc.uid
                     },
-                },
-                { upsert: true },
-            );
+                    {
+                        $setOnInsert: {
+                            _id: rdoc._id,
+                            domainId: rdoc.domainId,
+                            pid: rdoc.pid,
+                            uid: rdoc.uid,
+                            time: rdoc.time,
+                            memory: rdoc.memory,
+                            length: rdoc.code?.length || 0,
+                            lang: rdoc.lang,
+                        },
+                    },
+                    { upsert: true },
+                );
 
-            // 只有首次 AC 時才發放硬幣
-            if (result.upsertedCount > 0) {
-                const coinAmount = +(ddoc?.coin_amount || 2);
-                const domainName = ddoc?.name || rdoc.domainId;
-                await CoinModel.inc( rdoc.uid, ddoc.owner, coinAmount, `答题：${domainName}（ID:${rdoc.pid}）`, 1);
-                logger.info(`User ${rdoc.uid} earned ${coinAmount} coins for first AC on problem ${rdoc.pid} in domain ${domainName}`);
+                // 只有首次 AC 時才發放硬幣
+                if (result.upsertedCount > 0) {
+                    const coinAmount = +(ddoc?.coin_amount || 2);
+                    const domainName = ddoc?.name || rdoc.domainId;
+                    await CoinModel.inc( rdoc.uid, ddoc.owner, coinAmount, `答题：${domainName}（ID:${rdoc.pid}）`, 1);
+                    logger.info(`User ${rdoc.uid} earned ${coinAmount} coins for first AC on problem ${rdoc.pid} in domain ${domainName}`);
+                }
+            } catch (error) {
+                logger.error('Error in coin reward plugin:', error);
             }
-        } catch (error) {
-            logger.error('Error in coin reward plugin:', error);
-        }
-    });
+        });
 
-    ctx.Route('coin_show', '/coin/show', CoinShowHandler);
-    ctx.Route('coin_inc', '/coin/inc', CoinIncHandler, PRIV.PRIV_SET_PERM);
-    ctx.Route('coin_import', '/coin/import', CoinImportHandler, PRIV.PRIV_SET_PERM);
-    ctx.Route('coin_bill', '/coin/bill', CoinBillHandler, PRIV.PRIV_USER_PROFILE);
-    ctx.Route('coin_mall', '/coin/mall', CoinMallHandler, PRIV.PRIV_USER_PROFILE);
-    ctx.Route('coin_myrecord', '/coin/myrecord', CoinMyRecordHandler, PRIV.PRIV_USER_PROFILE);
-    ctx.Route('coin_exchange', '/coin/exchange/:id', CoinExchangeHandler, PRIV.PRIV_USER_PROFILE);
-    ctx.Route('coin_record', '/coin/record', CoinRecordHandler, PRIV.PRIV_SET_PERM);
-    // ctx.Route('coin_gift', '/coin/gift', CoinGiftHandler, PRIV.PRIV_USER_PROFILE);
-    ctx.Route('goods_add', '/goods/add', GoodsAddHandler, PRIV.PRIV_SET_PERM);
-    ctx.Route('goods_manage', '/goods/manage', GoodsManageHandler, PRIV.PRIV_SET_PERM);
-    ctx.Route('shop_manage_entries', '/shop/manage/entries', ShopManageEntriesHandler, PRIV.PRIV_SET_PERM);
-    ctx.Route('goods_edit', '/goods/:id/edit', GoodsEditHandler, PRIV.PRIV_SET_PERM);
-    ctx.Route('uname_change', '/uname/change', UnameChangeHandler, PRIV.PRIV_USER_PROFILE);
-    ctx.Route('domain_coin_setting', '/domain/coin', CoinSettingHandler, PRIV.PRIV_SET_PERM);
-    ctx.injectUI('DomainManage', 'domain_coin_setting',{family: 'Properties', icon: 'info' }, PRIV.PRIV_SET_PERM);
-    ctx.injectUI('UserDropdown', 'coin_bill', { icon: 'bold', displayName: '我的硬幣' });
-    const shopBridge: ShopBridge = {
-        goodsModel: GoodsModel,
-        registerGoodsPurchaseModel,
-        registerShopManageEntry,
-    };
-    (global.Hydro as any).shopBridge = shopBridge;
+        ctx.Route('coin_show', '/coin/show', CoinShowHandler);
+        ctx.Route('coin_inc', '/coin/inc', CoinIncHandler, PRIV.PRIV_SET_PERM);
+        ctx.Route('coin_import', '/coin/import', CoinImportHandler, PRIV.PRIV_SET_PERM);
+        ctx.Route('coin_bill', '/coin/bill', CoinBillHandler, PRIV.PRIV_USER_PROFILE);
+        ctx.Route('coin_mall', '/coin/mall', CoinMallHandler, PRIV.PRIV_USER_PROFILE);
+        ctx.Route('coin_myrecord', '/coin/myrecord', CoinMyRecordHandler, PRIV.PRIV_USER_PROFILE);
+        ctx.Route('coin_exchange', '/coin/exchange/:id', CoinExchangeHandler, PRIV.PRIV_USER_PROFILE);
+        ctx.Route('coin_record', '/coin/record', CoinRecordHandler, PRIV.PRIV_SET_PERM);
+        // ctx.Route('coin_gift', '/coin/gift', CoinGiftHandler, PRIV.PRIV_USER_PROFILE);
+        ctx.Route('goods_add', '/goods/add', GoodsAddHandler, PRIV.PRIV_SET_PERM);
+        ctx.Route('goods_manage', '/goods/manage', GoodsManageHandler, PRIV.PRIV_SET_PERM);
+        ctx.Route('shop_manage_entries', '/shop/manage/entries', ShopManageEntriesHandler, PRIV.PRIV_SET_PERM);
+        ctx.Route('goods_edit', '/goods/:id/edit', GoodsEditHandler, PRIV.PRIV_SET_PERM);
+        ctx.Route('uname_change', '/uname/change', UnameChangeHandler, PRIV.PRIV_USER_PROFILE);
+        ctx.Route('domain_coin_setting', '/domain/coin', CoinSettingHandler, PRIV.PRIV_SET_PERM);
+        ctx.injectUI('DomainManage', 'domain_coin_setting',{family: 'Properties', icon: 'info' }, PRIV.PRIV_SET_PERM);
+        ctx.injectUI('UserDropdown', 'coin_bill', { icon: 'bold', displayName: '我的硬幣' });
+        const shopBridge: ShopBridge = {
+            goodsModel: GoodsModel,
+            registerGoodsPurchaseModel,
+            registerShopManageEntry,
+        };
+        (global.Hydro as any).shopBridge = shopBridge;
 
-    ctx.provide('coin', CoinModel);
-    ctx.provide('shop', GoodsModel);
-    ctx.provide('shop_bridge', shopBridge as any);
-    ctx.i18n.load('zh', {
-        coin_show: '展示硬幣',
-        coin_inc: '發放硬幣',
-        coin_import: '批量發放硬幣',
-        coin_bill: '發放紀錄',
-        coin_mall: '兌換商城',
-        coin_myrecord: '我的兌換紀錄',
-        coin_exchange: '兌換商品',
-        coin_record: '所有人的兌換紀錄',
-        coin_gift: '贈送硬幣',
-        goods_add: '新增商品',
-        goods_manage: '管理商品',
-        shop_manage_entries: '擴充管理',
-        goods_edit: '編輯商品',
-        uname_change: '修改使用者名稱',
-        domain_coin_setting: '硬幣設定',
-    });
+        ctx.provide('coin', CoinModel);
+        ctx.provide('shop', GoodsModel);
+        ctx.provide('shop_bridge', shopBridge as any);
+        ctx.i18n.load('zh', {
+            coin_show: '展示硬幣',
+            coin_inc: '發放硬幣',
+            coin_import: '批量發放硬幣',
+            coin_bill: '發放紀錄',
+            coin_mall: '兌換商城',
+            coin_myrecord: '我的兌換紀錄',
+            coin_exchange: '兌換商品',
+            coin_record: '所有人的兌換紀錄',
+            coin_gift: '贈送硬幣',
+            goods_add: '新增商品',
+            goods_manage: '管理商品',
+            shop_manage_entries: '擴充管理',
+            goods_edit: '編輯商品',
+            uname_change: '修改使用者名稱',
+            domain_coin_setting: '硬幣設定',
+        });
+    }
 }
-
 export { CoinModel, GoodsModel };
 export type { Goods, GoodsPurchaseModel };
