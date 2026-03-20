@@ -1,0 +1,25 @@
+{% extends "coin_base.html" %}
+{% block coin_content %}
+<div class="section">
+  <div class="section__header">
+    <h1 class="section__title">{{ _('coin_import') }}</h1>
+  </div>
+  <div class="section__body">
+    <blockquote class="note">
+      <p>{{ _('從 Excel 或 CSV 複製 [使用者名稱],[發放數量],[發放原因] 以批量發放硬幣。如：student1,10,reward') }}</p>
+    </blockquote>
+    {{ noscript_note.render() }}
+    <p name="messages"></p>
+    {{ form.form_textarea({
+        columns:null,
+      label:'發放硬幣',
+        name:'coins',
+        nospellcheck: true
+        }) }}
+    <div class="row"><div class="columns">
+      <button name="preview" class="rounded primary button">{{ _('Preview') }}</button>
+      <button name="submit" class="rounded button">{{ _('Submit') }}</button>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

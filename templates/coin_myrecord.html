@@ -1,0 +1,74 @@
+{% import "components/paginator.html" as paginator with context %}
+{% import "components/nothing.html" as nothing with context %}
+{% extends "coin_base.html" %}
+{% block coin_content %}
+<div class="section">
+    <div class="section__header">
+        <h1 class="section__title">{{ _('coin_myrecord') }}</h1>
+    </div>
+    <div class="section__body">
+        <form method="get" class="row">
+            <div class="medium-5 columns">
+                {{ form.form_text({
+                    label:'關鍵字',
+                    name:'keyword',
+                    value:keyword|default(''),
+                    placeholder:'依原因文字搜尋'
+                }) }}
+            </div>
+            <div class="medium-4 columns">
+                {{ form.form_text({
+                    label:'物件ID',
+                    name:'objectId',
+                    value:objectId|default(''),
+                    placeholder:'例如：badge:3'
+                }) }}
+            </div>
+            <div class="medium-3 columns">
+                <button type="submit" class="rounded primary button">{{ _('搜尋') }}</button>
+                <a href="{{ url('coin_myrecord') }}" class="rounded button">{{ _('清除') }}</a>
+            </div>
+        </form>
+    </div>
+    <div class="section__body no-padding">
+        {% if not bills.length %}
+        {{ nothing.render('沒有兌換紀錄！') }}
+        {% else %}
+        <table class="data-table">
+            <colgroup>
+                <col class="col--time" style="width:6rem">
+                <col class="col--uid" style="width:12rem">
+                <col class="col--uid" style="width:12rem">
+                <col class="col--amount" style="width:4rem">
+                <col class="col--text">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>{{ _('Time') }}</th>
+                    <th>{{ _('發放者') }}</th>
+                    <th>{{ _('接收者') }}</th>
+                    <th>{{ _('數額') }}</th>
+                    <th>{{ _('原因') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%- for bill in bills -%}
+                <tr data-uid="{{ udoc.uid }}">
+                    <td>{{ datetimeSpan(bill._id)|safe }}</td>
+                    <td>{{ user.render_inline(udict[bill.rootId],avatar=false,badge=false,inline=false) }}</td>
+                    <td>
+                        <a href="{{ url('coin_bill',query={uid:bill.userId}) }}">
+                            {{ user.render_inline(udict[bill.userId],avatar=false,badge=false,inline=false) }}
+                        </a>
+                    </td>
+                    <td>{{ bill.amount }}</td>
+                    <td>{{ bill.text }}</td>
+                </tr>
+                {%- endfor -%}
+            </tbody>
+        </table>
+        {{ paginator.render(page, upcount) }}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

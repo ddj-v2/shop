@@ -1,0 +1,40 @@
+{% extends "coin_base.html" %}
+{% block coin_content %}
+<div class="section">
+    <div class="section__header">
+        <h1 class="section__title">{{ _('coin_exchange') }}</h1>
+        <div class="section__tools">
+            目前硬幣數量: {{ udoc['coin_now']|default('0') }}
+        </div>
+    </div>
+    <div class="section__body typo richmedia">
+        <p>{{ _('物件ID：') }}{{ goods.objectId|default('-') }}</p>
+        <p>{{ _('商品名稱：') }}{{ _(goods.name) }}</p>
+        <div>
+            <p>{{ _('商品描述：') }}</p>
+            <div class="typo richmedia">{{ goods.description|default('')|markdown|safe }}</div>
+        </div>
+        <p>{{ _('商品價格：') }}{{ goods.price}}</p>
+        <p>{{ _('商品庫存：') }}{% if goods.num < 0 %}無限{% else %}{{ goods.num }}{% endif %}</p>
+        <form method="post">
+            {{ form.form_text({
+                label:'商品數量',
+                name:'num',
+                value:'1',
+                autofocus:true,
+                required:true
+                }) }}
+            <div class="row">
+                <div class="columns">
+                    <button type="submit" class="rounded primary button">
+                        {{ _('兌換') }}
+                    </button>
+                    <button type="button" class="rounded button" onclick="window.history.go(-1)">
+                        {{ _('Cancel') }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

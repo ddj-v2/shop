@@ -1,0 +1,50 @@
+{% extends "coin_base.html" %}
+{% block coin_content %}
+<div class="section">
+    <div class="section__header">
+        <h1 class="section__title">{{ _('goods_add') }}</h1>
+    </div>
+    <div class="section__body">
+        <form method="post">
+            {{ form.form_text({
+                label:'物件 ID（可重複）',
+                name:'objectId',
+                placeholder:'例如：problem-1001'
+                }) }}
+            {{ form.form_text({
+                label:'商品名稱',
+                name:'name',
+                autofocus:true,
+                required:true
+                }) }}
+            {{ form.form_textarea({
+                columns:null,
+                label:'商品描述（Markdown）',
+                name:'description',
+                placeholder:'輸入商品描述，支援 Markdown 語法'
+                }) }}
+            {{ form.form_text({
+                label:'商品價格',
+                name:'price',
+                required:true
+                }) }}
+            {{ form.form_text({
+                label:'商品數量',
+                name:'num',
+                placeholder:'輸入 -1 表示無限供應',
+                required:true
+                }) }}
+            <div class="row">
+                <div class="columns">
+                    <button type="submit" class="rounded primary button">
+                        {{ _('Add') }}
+                    </button>
+                    <button type="button" class="rounded button" onclick="window.history.go(-1)">
+                        {{ _('Cancel') }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

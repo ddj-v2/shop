@@ -1,0 +1,22 @@
+{% extends "coin_base.html" %}
+{% import "components/nothing.html" as nothing with context %}
+{% block coin_content %}
+<div class="section">
+    <div class="section__header">
+        <h1 class="section__title">{{ _('shop_manage_entries') }}</h1>
+    </div>
+    <div class="section__body">
+        {% if not manageEntries or not manageEntries.length %}
+        {{ nothing.render('暫無可用擴充入口。') }}
+        {% else %}
+        <div class="typo">
+            <ul>
+                {% for entry in manageEntries %}
+                <li><a href="{{ entry.href }}">{{ _(entry.title) }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

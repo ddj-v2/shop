@@ -1,0 +1,31 @@
+{% extends "domain_base.html" %}
+{% block domain_content %}
+<div class="section">
+  <div class="section__header">
+    <h1 class="section__title">{{ _('domain_coin_setting') }}</h1>
+  </div>
+  <div class="section__body">
+    <form method="POST">
+      {{ form.form_checkbox({
+        label: '自動發放硬幣',
+        name: 'coin_enabled',
+        help_text: '為此網域啟用首次 AC 硬幣發放功能',
+        value: coin_enabled
+      }) }}
+      {{ form.form_text({
+        label: '每題硬幣數量',
+        name: 'coin_amount',
+        help_text: '每題首次 AC 可獲得的硬幣數量',
+        value: coin_amount,
+        type: 'number'
+      }) }}
+      <button class="rounded primary button" type="submit">
+        {{ _('Save All Changes') }}
+      </button>
+      <button type="button" class="rounded button" onclick="window.history.go(-1)">
+        {{ _('Cancel') }}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
