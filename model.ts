@@ -15,6 +15,7 @@ interface Bill {
 export interface Goods {
     _id: number;
     objectId?: string;
+    redirectUrl?: string;
     purchaseModelId?: string;
     data?: Record<string, unknown>;
     name: string;
@@ -88,6 +89,7 @@ class GoodsModel {
         purchaseModelId = '',
         data?: Record<string, unknown>,
         description = '',
+        redirectUrl = '',
     ) {
         if (typeof goodsId !== 'number') {
             const [goods] = await GoodsModel.coll.find({}).sort({ _id: -1 }).limit(1).toArray();
@@ -96,6 +98,7 @@ class GoodsModel {
         const result = await GoodsModel.coll.insertOne({
             _id: goodsId,
             objectId,
+            redirectUrl,
             purchaseModelId,
             data,
             name,
@@ -131,8 +134,9 @@ class GoodsModel {
         purchaseModelId?: string,
         data?: Record<string, unknown>,
         description?: string,
+        redirectUrl = '',
     ): Promise<number> {
-        const $set: Record<string, unknown> = { name, price, num, objectId };
+        const $set: Record<string, unknown> = { name, price, num, objectId, redirectUrl };
         if (typeof purchaseModelId === 'string') $set.purchaseModelId = purchaseModelId;
         if (data !== undefined) $set.data = data;
         if (description !== undefined) $set.description = description;

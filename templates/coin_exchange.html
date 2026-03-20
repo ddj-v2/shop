@@ -10,6 +10,9 @@
     <div class="section__body typo richmedia">
         <p>{{ _('物件ID：') }}{{ goods.objectId|default('-') }}</p>
         <p>{{ _('商品名稱：') }}{{ _(goods.name) }}</p>
+        {% if goods.redirectUrl %}
+        <p>{{ _('購買後跳轉：') }}{{ goods.redirectUrl }}</p>
+        {% endif %}
         <div>
             <p>{{ _('商品描述：') }}</p>
             <div class="typo richmedia">{{ goods.description|default('')|markdown|safe }}</div>

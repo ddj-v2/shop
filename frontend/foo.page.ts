@@ -63,6 +63,7 @@ addPage (new NamedPage('goods_add', () => {
     try {
       const res = await request.post('', {
         objectId: $form.find('[name="objectId"]').val(),
+        redirectUrl: $form.find('[name="redirectUrl"]').val(),
         name: $form.find('[name="name"]').val(),
         description: $form.find('[name="description"]').val(),
         price: $form.find('[name="price"]').val(),
@@ -89,6 +90,7 @@ addPage(new NamedPage('goods_edit', () => {
         operation: 'update',
         id: $form.find('[name="id"]').val(),
         objectId: $form.find('[name="objectId"]').val(),
+        redirectUrl: $form.find('[name="redirectUrl"]').val(),
         name: $form.find('[name="name"]').val(),
         description: $form.find('[name="description"]').val(),
         price: $form.find('[name="price"]').val(),
@@ -138,10 +140,11 @@ addPage (new NamedPage('coin_exchange', () => {
         id: $form.find('[name="id"]').val(),
         num: $form.find('[name="num"]').val(),
       });
-      if (res.url) {
+      const target = res.success ? (res.redirectUrl || res.url) : '';
+      if (res.success && target) {
         Notification.success(i18n('兌換商品成功'));
         await delay(1000);
-        window.location.href = res.url;  
+        window.location.href = target;
       }
     } catch (e) {
       Notification.error(e.message);

@@ -12,6 +12,12 @@
                 value:goods.objectId|default('')
                 }) }}
             {{ form.form_text({
+                label:'購買後跳轉連結（選填）',
+                name:'redirectUrl',
+                value:goods.redirectUrl|default(''),
+                placeholder:'例如：/problem/1001 或 https://example.com'
+                }) }}
+            {{ form.form_text({
                 label:'商品名稱',
                 name:'name',
                 value:goods.name|default(''),

@@ -38,6 +38,15 @@ function getPurchaseModel(purchaseModelId?: string): GoodsPurchaseModel | null {
     return model;
 }
 
+function normalizeRedirectUrl(raw?: string): string | null {
+    if (!raw) return null;
+    const url = raw.trim();
+    if (!url) return null;
+    if (url.startsWith('/')) return url;
+    if (/^https?:\/\//i.test(url)) return url;
+    return null;
+}
+
 async function invokePurchaseModel(uid: number, goods: Goods, num: number) {
     const model = getPurchaseModel(goods.purchaseModelId);
     if (!model) return;
@@ -212,8 +221,9 @@ class GoodsAddHandler extends Handler {
     @param('price', Types.Int)
     @param('num', Types.Int)
     @param('objectId', Types.String, true)
-    async post(domainId: string, name: string, description = '', price: number, num: number, objectId = '') {
-        await GoodsModel.add(name, price, num, objectId.trim(), undefined, '', undefined, description);
+    @param('redirectUrl', Types.String, true)
+    async post(domainId: string, name: string, description = '', price: number, num: number, objectId = '', redirectUrl = '') {
+        await GoodsModel.add(name, price, num, objectId.trim(), undefined, '', undefined, description, redirectUrl.trim());
         this.response.body = { success: true };
     }
 }
@@ -273,10 +283,11 @@ class GoodsEditHandler extends Handler {
     @param('price', Types.Int)
     @param('num', Types.Int)
     @param('objectId', Types.String, true)
-    async postUpdate(domainId: string, id: number, name: string, description = '', price: number, num: number, objectId = '') {
+    @param('redirectUrl', Types.String, true)
+    async postUpdate(domainId: string, id: number, name: string, description = '', price: number, num: number, objectId = '', redirectUrl = '') {
         const goods = await GoodsModel.get(id);
         if (!goods) throw new NotFoundError(`商品 ${id} 不存在！`);
-        await GoodsModel.edit(id, name, price, num, objectId.trim(), undefined, undefined, description);
+        await GoodsModel.edit(id, name, price, num, objectId.trim(), undefined, undefined, description, redirectUrl.trim());
         this.response.redirect = this.url('goods_manage');
     }
 
@@ -375,7 +386,9 @@ class CoinExchangeHandler extends Handler {
             throw e;
         }
         await CoinModel.inc(this.user._id, 1, amount, text, 0, id);
-        this.response.redirect = this.url('coin_myrecord');
+        const target = normalizeRedirectUrl(goods.redirectUrl) || this.url('coin_myrecord');
+        this.response.redirect = target;
+        this.response.body = { success: true, redirectUrl: target };
     }
 }
 
