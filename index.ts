@@ -665,7 +665,7 @@ export default class ShopService extends Service {
         ctx.Route('uname_change', '/uname/change', UnameChangeHandler, PRIV.PRIV_USER_PROFILE);
         ctx.Route('domain_coin_setting', '/domain/coin', CoinSettingHandler, PRIV.PRIV_SET_PERM);
         ctx.injectUI('DomainManage', 'domain_coin_setting',{family: 'Properties', icon: 'info' }, PRIV.PRIV_SET_PERM);
-        ctx.injectUI('UserDropdown', 'coin_bill', { icon: 'bold', displayName: '我的硬幣' });
+        ctx.injectUI('UserDropdown', 'coin_bill', { icon: 'award', displayName: '硬幣與商城' });
         const shopBridge: ShopBridge = {
             goodsModel: GoodsModel,
             registerGoodsPurchaseModel,

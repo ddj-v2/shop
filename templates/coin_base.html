@@ -10,12 +10,12 @@
                 <ol class="menu">
                     <li class="menu__item">
                         <div class="menu__link expandable">
-                            <span class="icon icon-bold"></span> {{ _('硬幣管理') }}
+                            <span class="icon icon-award"></span> {{ _('硬幣管理') }}
                         </div>
                         <ol class="menu collapsed">
                             <li class="menu__item">
                                 <div class="menu__link expandable">
-                                    <span class="icon icon-shopping-cart"></span> {{ _('使用者功能') }}
+                                    <span class="icon icon-user--multiple"></span> {{ _('使用者功能') }}
                                 </div>
                                 <ol class="menu collapsed">
                                     <li class="menu__item" id="menu-item-coin_mall">
@@ -60,7 +60,7 @@
                             {% if handler.user.hasPriv(PRIV.PRIV_SET_PERM) %}
                             <li class="menu__item">
                                 <div class="menu__link expandable">
-                                    <span class="icon icon-setting"></span> {{ _('管理功能') }}
+                                    <span class="icon icon-sliders"></span> {{ _('管理功能') }}
                                 </div>
                                 <ol class="menu collapsed">
                                     <li class="menu__item" id="menu-item-coin_inc">
