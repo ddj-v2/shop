@@ -114,7 +114,8 @@ class CoinIncHandler extends Handler {
     @param('uidOrName', Types.UidOrName)
     @param('amount', Types.Int)
     @param('text', Types.String)
-    async post(domainId: string, uidOrName: string, amount: number, text: string) {
+    @param('asset', Types.Boolean)
+    async post(domainId: string, uidOrName: string, amount: number, text: string, asset: boolean) {
         amount = parseInt(amount, 10);
         const udoc = await UserModel.getById(domainId, +uidOrName)
             || await UserModel.getByUname(domainId, uidOrName)
@@ -125,7 +126,7 @@ class CoinIncHandler extends Handler {
         if (udoc._id === 0) {
             throw new ValidationError(udoc.uname, '', '不能向 Guest 使用者發放硬幣');
         }  
-        await CoinModel.inc(udoc._id, this.user._id, amount, text, 1);
+        await CoinModel.inc(udoc._id, this.user._id, amount, text, asset ? 1 : 0);
         this.response.redirect = this.url('coin_inc');
     }
 }
@@ -201,7 +202,7 @@ class CoinImportHandler extends Handler {
                 try {
                     const user = await UserModel.getByUname(domainId, udoc.username);
                     if (!user || !udoc.amount || udoc.amount === 0) continue;  
-                    await CoinModel.inc(user._id, this.user._id, udoc.amount, udoc.text, 1);
+                    await CoinModel.inc(user._id, this.user._id, udoc.amount, udoc.text, 1); // TODO: 區分要不要算入總發放
                 } catch (e) {
                     messages.push(e.message);
                 }
