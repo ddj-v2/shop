@@ -696,7 +696,7 @@ export default class ShopService extends Service {
                 if (result.upsertedCount > 0) {
                     const coinAmount = +(ddoc?.coin_amount || 2);
                     const domainName = ddoc?.name || rdoc.domainId;
-                    await CoinModel.inc( rdoc.uid, ddoc.owner, coinAmount, `答题：${domainName}（ID:${rdoc.pid}）`, 1);
+                    await CoinModel.inc( rdoc.uid, ddoc.owner, coinAmount, `答題：${domainName}（ID:${rdoc.pid}）`, 1);
                     logger.info(`User ${rdoc.uid} earned ${coinAmount} coins for first AC on problem ${rdoc.pid} in domain ${domainName}`);
                 }
             } catch (error) {
