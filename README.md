@@ -257,7 +257,8 @@ ctx.inject(['Shop'], (c) => {
 - `_id: number` 商品 ID
 - `objectId?: string` 物件 ID（可重複）
 - `name: string` 商品名稱
-- `description?: string` 商品描述（Markdown）
+- `description?: string` 商品描述
+- `descriptionFormat?: 'markdown' | 'html'` 描述格式（預設 `markdown`）
 - `redirectUrl?: string` 購買成功後跳轉連結（支援 `/path` 或 `http(s)://`）
 - `price: number` 商品價格
 - `num: number` 庫存（`-1` 或任何 `< 0` 代表無限）
@@ -281,3 +282,15 @@ ctx.inject(['Shop'], (c) => {
 - 無限供應商品（`num < 0`）不會扣庫存。
 - 購買處理器可回傳 `false` 或 `{ success: false, message }` 拒絕兌換；若有 `message` 會直接顯示給使用者。
 - 取消訂單流程在目前版本已停用（`coin_myrecord` 的 `POST` 會回覆功能已停用）。
+
+### ⚠️ HTML 渲染安全提醒
+
+**只有具有足夠權限的管理員或信任使用者才應該允許使用 HTML 渲染功能**（`descriptionFormat: 'html'`）。
+
+- HTML 渲染允許使用者輸入 HTML 標籤，系統雖會進行安全清理（移除 `<script>`、事件屬性等），但建議：
+  1. **限制使用者權限**：只給有管理權限的人士添加/編輯使用 HTML 格式的商品
+  2. **定期審計**：檢查已發佈的 HTML 商品內容，確認無不當內容
+  3. **依賴清理函數**：系統會自動清理危險標籤，但防禦原則是多層次的
+  
+- 若沒有明確需求，建議預設使用 Markdown 格式（更安全、更易維護）
+- 外掛程式（如徽章）發佈的 HTML 商品已按安全規範進行內容逃脫和驗證
