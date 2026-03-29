@@ -31,6 +31,11 @@
                 value:goods.description|default(''),
                 placeholder:'輸入商品描述，支援 Markdown 語法'
                 }) }}
+            <label>{{ _('描述渲染格式') }}</label>
+            <select name="descriptionFormat">
+                <option value="markdown" {% if goods.descriptionFormat != 'html' %}selected{% endif %}>Markdown（相容舊資料）</option>
+                <option value="html" {% if goods.descriptionFormat == 'html' %}selected{% endif %}>HTML（直接渲染）</option>
+            </select>
             {{ form.form_text({
                 label:'商品價格',
                 name:'price',

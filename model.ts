@@ -20,6 +20,7 @@ export interface Goods {
     data?: Record<string, unknown>;
     name: string;
     description?: string;
+    descriptionFormat?: 'markdown' | 'html';
     price: number;
     num: number;
 }
@@ -89,6 +90,7 @@ class GoodsModel {
         purchaseModelId = '',
         data?: Record<string, unknown>,
         description = '',
+        descriptionFormat: 'markdown' | 'html' = 'markdown',
         redirectUrl = '',
     ) {
         if (typeof goodsId !== 'number') {
@@ -103,6 +105,7 @@ class GoodsModel {
             data,
             name,
             description,
+            descriptionFormat,
             price,
             num,
         });
@@ -134,12 +137,14 @@ class GoodsModel {
         purchaseModelId?: string,
         data?: Record<string, unknown>,
         description?: string,
+        descriptionFormat?: 'markdown' | 'html',
         redirectUrl = '',
     ): Promise<number> {
         const $set: Record<string, unknown> = { name, price, num, objectId, redirectUrl };
         if (typeof purchaseModelId === 'string') $set.purchaseModelId = purchaseModelId;
         if (data !== undefined) $set.data = data;
         if (description !== undefined) $set.description = description;
+        if (descriptionFormat !== undefined) $set.descriptionFormat = descriptionFormat;
         const result = await GoodsModel.coll.updateOne(
             { _id: goodsId },
             { $set }

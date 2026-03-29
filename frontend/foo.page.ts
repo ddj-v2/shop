@@ -66,6 +66,7 @@ addPage (new NamedPage('goods_add', () => {
         redirectUrl: $form.find('[name="redirectUrl"]').val(),
         name: $form.find('[name="name"]').val(),
         description: $form.find('[name="description"]').val(),
+        descriptionFormat: $form.find('[name="descriptionFormat"]').val(),
         price: $form.find('[name="price"]').val(),
         num: $form.find('[name="num"]').val(),
       });
@@ -93,6 +94,7 @@ addPage(new NamedPage('goods_edit', () => {
         redirectUrl: $form.find('[name="redirectUrl"]').val(),
         name: $form.find('[name="name"]').val(),
         description: $form.find('[name="description"]').val(),
+        descriptionFormat: $form.find('[name="descriptionFormat"]').val(),
         price: $form.find('[name="price"]').val(),
         num: $form.find('[name="num"]').val(),
       });

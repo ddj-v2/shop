@@ -15,7 +15,13 @@
         {% endif %}
         <div>
             <p>{{ _('商品描述：') }}</p>
-            <div class="typo richmedia">{{ goods.description|default('')|markdown|safe }}</div>
+            <div class="typo richmedia">
+                {% if goods.descriptionFormat == 'html' %}
+                    {{ goods.description|default('')|safe }}
+                {% else %}
+                    {{ goods.description|default('')|markdown|safe }}
+                {% endif %}
+            </div>
         </div>
         <p>{{ _('商品價格：') }}{{ goods.price}}</p>
         <p>{{ _('商品庫存：') }}{% if goods.num < 0 %}無限{% else %}{{ goods.num }}{% endif %}</p>

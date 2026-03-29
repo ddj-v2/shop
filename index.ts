@@ -18,6 +18,7 @@ export interface ShopBridge {
     goodsModel: typeof GoodsModel;
     registerGoodsPurchaseModel: typeof registerGoodsPurchaseModel;
     registerShopManageEntry: typeof registerShopManageEntry;
+    sanitizeHtml: (html: string) => string;
 }
 
 const shopManageEntries = new Map<string, ShopManageEntry>();
@@ -47,6 +48,32 @@ function normalizeRedirectUrl(raw?: string): string | null {
     if (url.startsWith('/')) return url;
     if (/^https?:\/\//i.test(url)) return url;
     return null;
+}
+
+function normalizeDescriptionFormat(raw?: string): 'markdown' | 'html' {
+    return raw === 'html' ? 'html' : 'markdown';
+}
+
+// 安全的 HTML 清理函数，移除危险的标签和属性
+function sanitizeHtml(html: string): string {
+    if (!html) return '';
+    
+    // 移除所有 script 标签及内容
+    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    // 移除所有 iframe 标签
+    html = html.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+    // 移除所有事件属性 (on* 属性)
+    html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+    // 移除 style 标签 (如果需要保留内联 style 属性，可以注释掉下一行)
+    html = html.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+    // 移除危险的 href 属性 (javascript: 协议)
+    html = html.replace(/\bhref\s*=\s*["']?\s*javascript:/gi, 'href="javascript:void(0)"');
+    // 移除危险的 src 属性 (javascript: 协议)
+    html = html.replace(/\bsrc\s*=\s*["']?\s*javascript:/gi, 'src="javascript:void(0)"');
+    // 移除危险的 data 属性 (data: 协议)
+    html = html.replace(/\b(href|src)\s*=\s*["']?\s*data:/gi, '$1="javascript:void(0)"');
+    
+    return html;
 }
 
 async function invokePurchaseModel(uid: number, goods: Goods, num: number) {
@@ -224,9 +251,23 @@ class GoodsAddHandler extends Handler {
     @param('price', Types.Int)
     @param('num', Types.Int)
     @param('objectId', Types.String, true)
+    @param('descriptionFormat', Types.String, true)
     @param('redirectUrl', Types.String, true)
-    async post(domainId: string, name: string, description = '', price: number, num: number, objectId = '', redirectUrl = '') {
-        await GoodsModel.add(name, price, num, objectId.trim(), undefined, '', undefined, description, redirectUrl.trim());
+    async post(domainId: string, name: string, description = '', price: number, num: number, objectId = '', descriptionFormat = 'markdown', redirectUrl = '') {
+        const normalizedFormat = normalizeDescriptionFormat(descriptionFormat);
+        const sanitizedDescription = normalizedFormat === 'html' ? sanitizeHtml(description) : description;
+        await GoodsModel.add(
+            name,
+            price,
+            num,
+            objectId.trim(),
+            undefined,
+            '',
+            undefined,
+            sanitizedDescription,
+            normalizedFormat,
+            redirectUrl.trim()
+        );
         this.response.body = { success: true };
     }
 }
@@ -286,11 +327,25 @@ class GoodsEditHandler extends Handler {
     @param('price', Types.Int)
     @param('num', Types.Int)
     @param('objectId', Types.String, true)
+    @param('descriptionFormat', Types.String, true)
     @param('redirectUrl', Types.String, true)
-    async postUpdate(domainId: string, id: number, name: string, description = '', price: number, num: number, objectId = '', redirectUrl = '') {
+    async postUpdate(domainId: string, id: number, name: string, description = '', price: number, num: number, objectId = '', descriptionFormat = 'markdown', redirectUrl = '') {
         const goods = await GoodsModel.get(id);
         if (!goods) throw new NotFoundError(`商品 ${id} 不存在！`);
-        await GoodsModel.edit(id, name, price, num, objectId.trim(), undefined, undefined, description, redirectUrl.trim());
+        const normalizedFormat = normalizeDescriptionFormat(descriptionFormat);
+        const sanitizedDescription = normalizedFormat === 'html' ? sanitizeHtml(description) : description;
+        await GoodsModel.edit(
+            id,
+            name,
+            price,
+            num,
+            objectId.trim(),
+            undefined,
+            undefined,
+            sanitizedDescription,
+            normalizedFormat,
+            redirectUrl.trim()
+        );
         this.response.redirect = this.url('goods_manage');
     }
 
@@ -670,6 +725,7 @@ export default class ShopService extends Service {
             goodsModel: GoodsModel,
             registerGoodsPurchaseModel,
             registerShopManageEntry,
+            sanitizeHtml,
         };
         (global.Hydro as any).shopBridge = shopBridge;
 

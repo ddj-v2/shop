@@ -71,7 +71,13 @@
                         <td>{{ ddoc.objectId|default('-') }}</td>
                         <td>{{ _(ddoc.name) }}</td>
                         <td>
-                            <div class="typo richmedia">{{ ddoc.description|default('')|markdown|safe }}</div>
+                            <div class="typo richmedia">
+                                {% if ddoc.descriptionFormat == 'html' %}
+                                    {{ ddoc.description|default('')|safe }}
+                                {% else %}
+                                    {{ ddoc.description|default('')|markdown|safe }}
+                                {% endif %}
+                            </div>
                         </td>
                         <td>{{ ddoc.price }}</td>
                         <td>{% if ddoc.num < 0 %}無限{% else %}{{ ddoc.num }}{% endif %}</td>
