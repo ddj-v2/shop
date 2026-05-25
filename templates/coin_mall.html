@@ -42,7 +42,7 @@
         {% if not ddocs.length %}
         {{ nothing.render('抱歉，目前沒有商品。') }}
         {% else %}
-        <div class="section__table-container">
+        <!-- <div class="section__table-container"> -->
             <table class="data-table section__table-heade">
                 <colgroup>
                     <!-- <col class="col--id" style="width:5rem"> -->
@@ -89,7 +89,7 @@
                 </tbody>
             </table>
             {{ paginator.render(page, dpcount) }}
-        </div>
+        <!-- </div> -->
         {% endif %}
     </div>
 </div>
